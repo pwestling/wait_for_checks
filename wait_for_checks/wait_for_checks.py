@@ -165,12 +165,12 @@ def main():
                             )
                         )
                         printed_lines += 1
-                    statuses = [workflow["status"].lower() for workflow in workflows]
+                    statuses = [get_status(workflow) for workflow in workflows]
                     if len(statuses) > 0:
-                        if all(status == "completed" for status in statuses):
+                        if all(status == "SUCCESS" for status in statuses):
                             print("All workflows completed.")
                             return True
-                        if any(status == "failed" for status in statuses):
+                        if any(status == "FAILURE" for status in statuses):
                             print("One or more workflows failed.")
                             return False
                 time.sleep(0.05)
