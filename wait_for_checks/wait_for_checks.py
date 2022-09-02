@@ -85,7 +85,6 @@ def main():
 
     if len(path_parts) == 3:
         pr = github(f"/repos/{user_or_org}/{repo_name}/branches/master")
-        print(pr)
         head_commit = pr["commit"]["sha"]
     elif kind() == "pull":
         pr: dict = github(f"/repos/{user_or_org}/{repo_name}/pulls/{pr_number_or_commit_sha()}")
