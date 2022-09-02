@@ -50,6 +50,9 @@ query = """
 
 def main():
     token = os.getenv("GITHUB_TOKEN")
+    if token is None:
+        print("ERROR: GITHUB_TOKEN must be set to your Personal Access Token https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
+        sys.exit(1)
 
     target = sys.argv[1]
     parsed_target = urlparse(target)
@@ -82,6 +85,7 @@ def main():
 
     if len(path_parts) == 3:
         pr = github(f"/repos/{user_or_org}/{repo_name}/branches/master")
+        print(pr)
         head_commit = pr["commit"]["sha"]
     elif kind() == "pull":
         pr: dict = github(f"/repos/{user_or_org}/{repo_name}/pulls/{pr_number_or_commit_sha()}")
