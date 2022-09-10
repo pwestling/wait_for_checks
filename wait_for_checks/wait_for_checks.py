@@ -6,6 +6,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Thread
 from urllib.parse import urlparse
+import argparse
+
 
 import os
 
@@ -54,7 +56,13 @@ def main():
         print("ERROR: GITHUB_TOKEN must be set to your Personal Access Token https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
         sys.exit(1)
 
-    target = sys.argv[1]
+    parser = argparse.ArgumentParser(description='Wait for GitHub Checks for a PR, commit, or repo head')
+    parser.add_argument('github_url', type=str, help='A full github url to a PR, commit, or repository')
+    # argument for whether to say results via 'say' command
+    parser.add_argument('-s','--say', action='store_true', help='Say the results via the say command')
+    args = parser.parse_args()
+
+    target = args.github_url
     parsed_target = urlparse(target)
     path_parts = parsed_target.path.split("/")
     user_or_org = path_parts[1]
@@ -181,8 +189,11 @@ def main():
 
         result = render()
         if not result:
+            if args.say:
+                os.system("say 'One or more github checks failed'")
             sys.exit(1)
-
+        if args.say:
+            os.system("say 'All github checks passed'")
 
 if __name__ == '__main__':
     main()
