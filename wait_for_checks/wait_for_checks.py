@@ -61,6 +61,10 @@ def main():
     # argument for whether to say results via 'say' command
     parser.add_argument('-s','--say', action='store_true', help='Say the results via the say command')
     parser.add_argument('-i','--ignore-failures', action='store_true', help='Ignore failed checks and only report when all checks are done')
+
+    # add an argument which is a list of workflows to skip
+    parser.add_argument('-w','--skip-workflows', nargs='+', help='A list of workflow names to skip')
+
     args = parser.parse_args()
 
     target = args.github_url
@@ -164,6 +168,11 @@ def main():
                     workflows = [run["node"] for run in results["data"]["node"]["checkSuites"]["edges"] if (run["node"]["workflowRun"])]
                     workflows = [workflow for workflow in workflows if workflow["workflowRun"]["workflow"]["name"] != "workflow_metrics"]
                     workflows = sorted(workflows, key=lambda workflow: workflow["workflowRun"]["workflow"]["name"])
+
+                    # Filter out skipped workflows
+                    if args.skip_workflows:
+                        workflows = [workflow for workflow in workflows if workflow["workflowRun"]["workflow"]["name"] not in args.skip_workflows]
+
                     for workflow in workflows:
 
                         workflow_name = truncate(workflow_name_width, workflow["workflowRun"]["workflow"]["name"])
