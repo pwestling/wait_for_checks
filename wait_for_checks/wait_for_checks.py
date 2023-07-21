@@ -60,6 +60,7 @@ def main():
     parser.add_argument('github_url', type=str, help='A full github url to a PR, commit, or repository')
     # argument for whether to say results via 'say' command
     parser.add_argument('-s','--say', action='store_true', help='Say the results via the say command')
+    parser.add_argument('-i','--ignore-failures', action='store_true', help='Ignore failed checks and only report when all checks are done')
     args = parser.parse_args()
 
     target = args.github_url
@@ -180,20 +181,33 @@ def main():
                     if len(statuses) > 0:
                         if all(status == "SUCCESS" for status in statuses):
                             print("All workflows completed.")
-                            return True
+                            return "PASSED"
                         if any(status == "FAILURE" for status in statuses):
                             print("One or more workflows failed.")
-                            return False
+                            if not args.ignore_failures:
+                                return "FAILED"
+                        if all(status != "IN_PROGRESS" for status in statuses):
+                            print("All workflows finished.")
+                            return "FINISHED"
                 time.sleep(0.05)
                 tick += 1
 
         result = render()
-        if not result:
+        if result == "PASSED":
+            if args.say:
+                os.system("say 'All github checks passed'")
+            sys.exit(0)
+        elif result == "FAILED":
             if args.say:
                 os.system("say 'One or more github checks failed'")
             sys.exit(1)
-        if args.say:
-            os.system("say 'All github checks passed'")
+        elif result == "FINISHED":
+            if args.say:
+                os.system("say 'All github checks finished'")
+            sys.exit(0)
+        else:
+            raise Exception("Unknown result: {}".format(result))
+        
 
 if __name__ == '__main__':
     main()
