@@ -183,8 +183,8 @@ def main():
                             print("All workflows completed.")
                             return "PASSED"
                         if any(status == "FAILURE" for status in statuses):
-                            print("One or more workflows failed.")
                             if not args.ignore_failures:
+                                print("One or more workflows failed.")
                                 return "FAILED"
                         if all(status != "IN_PROGRESS" for status in statuses):
                             print("All workflows finished.")
@@ -207,7 +207,7 @@ def main():
             sys.exit(0)
         else:
             raise Exception("Unknown result: {}".format(result))
-        
+
 
 if __name__ == '__main__':
     main()
