@@ -67,6 +67,43 @@ def merge_pr(token: str, repo: str, pr_number: str, say: bool) -> None:
         if say:
             os.system("say 'Merged pull request'")
 
+
+def enqueue_pull_request(token: str, pull_request_id: str, expected_head_oid: str, say: bool) -> None:
+    query = """
+    mutation EnqueuePR($input: EnqueuePullRequestInput!) {
+      enqueuePullRequest(input: $input) {
+        clientMutationId
+        mergeQueueEntry {
+          id
+        }
+      }
+    }
+    """
+    variables = {
+        "input": {
+            "clientMutationId": "some_unique_id",  # Any unique identifier
+            "expectedHeadOid": expected_head_oid,
+            "pullRequestId": pull_request_id
+        }
+    }
+
+    response = requests.post(
+        "https://api.github.com/graphql",
+        json={"query": query, "variables": variables},
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+        }
+    )
+    if response.status_code != 200:
+        print(f"Failed to enqueue PR: {response.json()}")
+        if say:
+            os.system("say 'Failed to enqueue pull request'")
+    else:
+        print("Enqueued PR")
+        if say:
+            os.system("say 'Enqueued pull request'")
+
 def main():
     token = os.getenv("GITHUB_TOKEN")
     if token is None:
@@ -79,6 +116,7 @@ def main():
     parser.add_argument('-s','--say', action='store_true', help='Say the results via the say command')
     parser.add_argument('-i','--ignore-failures', action='store_true', help='Ignore failed checks and only report when all checks are done')
     parser.add_argument('-m', '--merge', action='store_true', help='Automatically merge the PR if all checks pass')
+    parser.add_argument('-e', '--enqueue', action='store_true', help='Automatically enqueue the PR to the merge queue if all checks pass')
 
     # add an argument which is a list of workflows to skip
     parser.add_argument('-w','--skip-workflows', nargs='+', help='A list of workflow names to skip')
@@ -223,8 +261,13 @@ def main():
         if result == "PASSED":
             if args.say:
                 os.system("say 'All github checks passed'")
-            if args.merge and kind() == "pull":
-                merge_pr(token, f"{user_or_org}/{repo_name}", pr_number_or_commit_sha(), args.say)
+            if (args.merge or args.enqueue) and kind() == "pull":
+                pull_request_id = pr["node_id"]
+                expected_head_oid = pr["head"]["sha"]
+                if args.merge:
+                    merge_pr(token, f"{user_or_org}/{repo_name}", pr_number_or_commit_sha(), args.say)
+                if args.enqueue:
+                    enqueue_pull_request(token, pull_request_id, expected_head_oid, args.say)
             sys.exit(0)
         elif result == "FAILED":
             if args.say:
