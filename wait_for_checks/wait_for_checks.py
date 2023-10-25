@@ -50,6 +50,17 @@ query = """
 }}
 """
 
+def merge_pr(token: str, repo: str, pr_number: str) -> None:
+    response = requests.put(
+        f"https://api.github.com/repos/{repo}/pulls/{pr_number}/merge",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+        },
+    )
+    if response.status_code != 200:
+        print(f"Failed to merge PR: {response.json()}")
+
 def main():
     token = os.getenv("GITHUB_TOKEN")
     if token is None:
@@ -61,6 +72,7 @@ def main():
     # argument for whether to say results via 'say' command
     parser.add_argument('-s','--say', action='store_true', help='Say the results via the say command')
     parser.add_argument('-i','--ignore-failures', action='store_true', help='Ignore failed checks and only report when all checks are done')
+    parser.add_argument('-m', '--merge', action='store_true', help='Automatically merge the PR if all checks pass')
 
     # add an argument which is a list of workflows to skip
     parser.add_argument('-w','--skip-workflows', nargs='+', help='A list of workflow names to skip')
@@ -205,6 +217,10 @@ def main():
         if result == "PASSED":
             if args.say:
                 os.system("say 'All github checks passed'")
+            if args.merge and kind() == "pull":
+                merge_pr(token, f"{user_or_org}/{repo_name}", pr_number_or_commit_sha())
+                if args.say:
+                    os.system("say 'Merged pull request'")
             sys.exit(0)
         elif result == "FAILED":
             if args.say:
