@@ -50,7 +50,7 @@ query = """
 }}
 """
 
-def merge_pr(token: str, repo: str, pr_number: str) -> None:
+def merge_pr(token: str, repo: str, pr_number: str, say: bool) -> None:
     response = requests.put(
         f"https://api.github.com/repos/{repo}/pulls/{pr_number}/merge",
         headers={
@@ -60,6 +60,12 @@ def merge_pr(token: str, repo: str, pr_number: str) -> None:
     )
     if response.status_code != 200:
         print(f"Failed to merge PR: {response.json()}")
+        if say:
+            os.system("say 'Failed to merge pull request'")
+    else:
+        print("Merged PR")
+        if say:
+            os.system("say 'Merged pull request'")
 
 def main():
     token = os.getenv("GITHUB_TOKEN")
@@ -218,9 +224,7 @@ def main():
             if args.say:
                 os.system("say 'All github checks passed'")
             if args.merge and kind() == "pull":
-                merge_pr(token, f"{user_or_org}/{repo_name}", pr_number_or_commit_sha())
-                if args.say:
-                    os.system("say 'Merged pull request'")
+                merge_pr(token, f"{user_or_org}/{repo_name}", pr_number_or_commit_sha(), args.say)
             sys.exit(0)
         elif result == "FAILED":
             if args.say:
