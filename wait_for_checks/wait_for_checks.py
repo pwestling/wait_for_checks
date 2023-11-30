@@ -199,8 +199,8 @@ def main():
         workflow_name_width = 40
         job_name_width = 60
 
-        def get_status(workflow: dict) -> str:
-            job_nodes = [node["node"] for node in workflow["checkRuns"]["edges"]]
+        def get_status(workflow: dict, skips: list[str]) -> str:
+            job_nodes = [node["node"] for node in workflow["checkRuns"]["edges"] if node["node"]["name"] not in skips]
             if all((node["status"] == "COMPLETED" and (node["conclusion"] == "SUCCESS" or node["conclusion"] == "NEUTRAL")) for node in job_nodes):
                 return "SUCCESS"
             if any((node["status"] == "COMPLETED" and node["conclusion"] == "FAILURE") for node in job_nodes):
@@ -244,7 +244,7 @@ def main():
                             )
                         )
                         printed_lines += 1
-                    statuses = [get_status(workflow) for workflow in workflows]
+                    statuses = [get_status(workflow,  args.skip_workflows) for workflow in workflows]
                     if len(statuses) > 0:
                         if all(status == "SUCCESS" for status in statuses):
                             print("All workflows completed.")
