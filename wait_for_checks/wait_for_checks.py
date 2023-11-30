@@ -235,6 +235,8 @@ def main():
                         status = get_status(workflow)
                         status_symbol = get_status_symbol(status, math.floor(tick/10))
                         jobs = [node["node"]["name"] for node in workflow["checkRuns"]["edges"] if node["node"]["status"].lower() == "in_progress"]
+                        if args.skip_workflows:
+                            jobs = [job for job in jobs if job not in args.skip_workflows]
                         job_name = truncate(job_name_width, ",".join(jobs))
                         print(
                             "{:{width}}{:{width2}}{}".format(
