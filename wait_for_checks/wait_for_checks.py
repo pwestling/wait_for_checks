@@ -224,19 +224,19 @@ def main():
                     workflows = [run["node"] for run in results["data"]["node"]["checkSuites"]["edges"] if (run["node"]["workflowRun"])]
                     workflows = [workflow for workflow in workflows if workflow["workflowRun"]["workflow"]["name"] != "workflow_metrics"]
                     workflows = sorted(workflows, key=lambda workflow: workflow["workflowRun"]["workflow"]["name"])
-
+                    skip_workflows = args.skip_workflows or []
                     # Filter out skipped workflows
-                    if args.skip_workflows:
-                        workflows = [workflow for workflow in workflows if workflow["workflowRun"]["workflow"]["name"] not in args.skip_workflows]
+                    if skip_workflows:
+                        workflows = [workflow for workflow in workflows if workflow["workflowRun"]["workflow"]["name"] not in skip_workflows]
 
                     for workflow in workflows:
 
                         workflow_name = truncate(workflow_name_width, workflow["workflowRun"]["workflow"]["name"])
-                        status = get_status(workflow, args.skip_workflows)
+                        status = get_status(workflow, skip_workflows)
                         status_symbol = get_status_symbol(status, math.floor(tick/10))
                         jobs = [node["node"]["name"] for node in workflow["checkRuns"]["edges"] if node["node"]["status"].lower() == "in_progress"]
-                        if args.skip_workflows:
-                            jobs = [job for job in jobs if job not in args.skip_workflows]
+                        if skip_workflows:
+                            jobs = [job for job in jobs if job not in skip_workflows]
                         job_name = truncate(job_name_width, ",".join(jobs))
                         print(
                             "{:{width}}{:{width2}}{}".format(
@@ -244,7 +244,7 @@ def main():
                             )
                         )
                         printed_lines += 1
-                    statuses = [get_status(workflow,  args.skip_workflows) for workflow in workflows]
+                    statuses = [get_status(workflow,  skip_workflows) for workflow in workflows]
                     if len(statuses) > 0:
                         if all(status == "SUCCESS" for status in statuses):
                             print("All workflows completed.")
