@@ -232,7 +232,7 @@ def main():
                     for workflow in workflows:
 
                         workflow_name = truncate(workflow_name_width, workflow["workflowRun"]["workflow"]["name"])
-                        status = get_status(workflow)
+                        status = get_status(workflow, args.skip_workflows)
                         status_symbol = get_status_symbol(status, math.floor(tick/10))
                         jobs = [node["node"]["name"] for node in workflow["checkRuns"]["edges"] if node["node"]["status"].lower() == "in_progress"]
                         if args.skip_workflows:
